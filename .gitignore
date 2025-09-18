@@ -1,2 +1,3 @@
 llm/.env
 database/.env
+frontend/.env
