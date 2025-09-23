@@ -53,7 +53,7 @@ def _extract_tool_args(resp) -> dict:
         return {}
 
 
-def socratic_turn(user_text: str, step_hint: int | None = None):
+def socratic_turn(user_text: str, step_hint: int | None = None, conversation_history: list = None):
 #     One Socratic turn. Returns dict: { step_id, assistant_message, question, validation?, notes? }
     
     call_instructions = INSTRUCTIONS
@@ -63,8 +63,17 @@ def socratic_turn(user_text: str, step_hint: int | None = None):
             f"(unless the learner clearly regressed)."
         )
 
+    # Build input messages with conversation history for context
+    input_msgs = []
     
-    input_msgs = [{"role": "user", "content": user_text}]
+    # Add conversation history if provided
+    if conversation_history:
+        input_msgs.extend(conversation_history)
+    
+    # Add the current user message
+    input_msgs.append({"role": "user", "content": user_text})
+    
+    # Add system directive if step hint is provided
     if step_hint is not None:
         input_msgs.insert(0, {"role": "system", "content": f"NEXT STEP MUST BE {step_hint}."})
 

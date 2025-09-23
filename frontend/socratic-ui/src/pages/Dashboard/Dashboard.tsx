@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { socraticTurn, type SocraticRes } from "../../api";
+import { socraticTurn, type SocraticRes, type ConversationMessage } from "../../api";
 
 interface Message {
   id: string;
@@ -16,6 +16,7 @@ export default function Dashboard() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState(1); // Track current Socratic step
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,9 +35,16 @@ export default function Dashboard() {
     setText("");
 
     try {
+      // Build conversation history for context
+      const conversationHistory: ConversationMessage[] = messages.map(msg => ({
+        role: msg.type === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      }));
+
       const data = await socraticTurn({
         text: userMessage.content,
-        step: null,
+        step: currentStep, // Pass current step instead of null
+        conversation_history: conversationHistory, // Add conversation context
       });
 
       const assistantMessage: Message = {
@@ -50,6 +58,11 @@ export default function Dashboard() {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+      
+      // Update current step based on response
+      if (data.step_id) {
+        setCurrentStep(data.step_id);
+      }
     } catch (e: any) {
       setErr(e?.message ?? "Request failed");
     } finally {
@@ -65,18 +78,15 @@ export default function Dashboard() {
       <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
           <h1 className="text-xl font-semibold text-gray-900">Socratic Mentor</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">Welcome back!</span>
-            <button 
-              onClick={() => {
-                localStorage.removeItem('isLoggedIn');
-                window.location.href = '/';
-              }}
-              className="text-sm text-gray-500 hover:text-gray-700"
-            >
-              Logout
-            </button>
-          </div>
+          <button 
+            onClick={() => {
+              localStorage.removeItem('isLoggedIn');
+              window.location.href = '/';
+            }}
+            className="text-sm text-gray-500 hover:text-gray-700"
+          >
+            Logout
+          </button>
         </div>
       </header>
 
@@ -187,39 +197,46 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* Input Form */}
-            <div className="border-t border-gray-200 bg-white px-6 py-4">
-              <form onSubmit={onSubmit} className="flex gap-3">
-                <textarea
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder="Type your response..."
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900 placeholder-gray-500"
-                  rows={1}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      onSubmit(e);
-                    }
-                  }}
-                  required
-                />
-                <button
-                  type="submit"
-                  disabled={loading || !text.trim()}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                  </svg>
-                </button>
-              </form>
-              
-              {err && (
-                <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-red-800 text-sm">Error: {err}</p>
-                </div>
-              )}
+            {/* Input Form - Floating */}
+            <div className="px-6 pb-6">
+              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
+                <form onSubmit={onSubmit} className="flex gap-3">
+                  <textarea
+                    value={text}
+                    onChange={(e) => {
+                      setText(e.target.value);
+                      // Auto-resize textarea
+                      e.target.style.height = 'auto';
+                      e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                    }}
+                    placeholder="Type your response..."
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900 placeholder-gray-500 min-h-[40px] max-h-[120px] overflow-y-auto"
+                    rows={1}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        onSubmit(e);
+                      }
+                    }}
+                    required
+                  />
+                  <button
+                    type="submit"
+                    disabled={loading || !text.trim()}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                  </button>
+                </form>
+                
+                {err && (
+                  <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-800 text-sm">Error: {err}</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

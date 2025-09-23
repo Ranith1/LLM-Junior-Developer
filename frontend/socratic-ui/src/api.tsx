@@ -1,5 +1,15 @@
 // src/api.ts
-export type SocraticReq = { text: string; step?: number | null };
+export type ConversationMessage = {
+  role: string;
+  content: string;
+};
+
+export type SocraticReq = { 
+  text: string; 
+  step?: number | null;
+  conversation_history?: ConversationMessage[];
+};
+
 export type SocraticRes = {
   step_id?: number;
   assistant_message: string;

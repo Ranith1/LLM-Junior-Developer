@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional, Any, Dict
+from typing import Optional, Any, Dict, List
 from mentor import socratic_turn  # uses your existing function
 
 app = FastAPI()
@@ -16,9 +16,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+class ConversationMessage(BaseModel):
+    role: str  # 'user' or 'assistant'
+    content: str
+
 class SocraticReq(BaseModel):
     text: str
     step: Optional[int] = None
+    conversation_history: Optional[List[ConversationMessage]] = None
 
 class SocraticRes(BaseModel):
     step_id: Optional[int] = None
@@ -29,7 +34,15 @@ class SocraticRes(BaseModel):
 
 @app.post("/socratic-turn", response_model=SocraticRes)
 def do_turn(req: SocraticReq) -> Dict[str, Any]:
-    result = socratic_turn(req.text, req.step)
+    # Convert conversation history to dict format for mentor.py
+    conversation_history = None
+    if req.conversation_history:
+        conversation_history = [
+            {"role": msg.role, "content": msg.content} 
+            for msg in req.conversation_history
+        ]
+    
+    result = socratic_turn(req.text, req.step, conversation_history)
     # Make sure we always return the keys the UI expects
     return {
         "step_id": result.get("step_id"),
