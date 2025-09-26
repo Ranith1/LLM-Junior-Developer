@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-MODEL = os.getenv("MODEL_NAME", "gpt-5-mini")
+MODEL = os.getenv("MODEL_NAME", "gpt-5")
 
 PROMPT_PATH = BASE_DIR / "instructions.md"
 if not PROMPT_PATH.exists():

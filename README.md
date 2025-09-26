@@ -87,3 +87,14 @@ Required Skills and Knowledge
 ● Web tool design, development and deployment 
 
 ● Excellent communication skills, including the ability to produce clear and concise reports 
+
+
+running the tool:
+
+cd /Users/RehanAli/Desktop/UNI/FIT4701/LLM-Junior-Developer/llm
+python3 server.py
+
+
+cd /Users/RehanAli/Desktop/UNI/FIT4701/LLM-Junior-Developer/frontend/socratic-ui
+npm install
+npm run dev
