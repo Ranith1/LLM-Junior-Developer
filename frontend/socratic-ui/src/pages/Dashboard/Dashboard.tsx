@@ -72,7 +72,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
       <Header />
       
       <div className="flex flex-1 overflow-hidden">
@@ -85,7 +85,7 @@ export default function Dashboard() {
         />
 
         {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col overflow-hidden">
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 max-w-4xl mx-auto w-full">
             {messages.length === 0 ? (
@@ -159,8 +159,8 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Input Area */}
-          <div className="border-t border-gray-200 bg-white p-4">
+          {/* Input Area - Fixed at bottom */}
+          <div className="border-t border-gray-200 bg-white p-4 flex-shrink-0">
             <div className="max-w-4xl mx-auto">
               <form onSubmit={onSubmit} className="flex gap-3">
                 <textarea
