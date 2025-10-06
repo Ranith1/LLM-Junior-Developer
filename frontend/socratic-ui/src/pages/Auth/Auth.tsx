@@ -182,42 +182,6 @@ export default function Auth() {
               {isSignUp ? 'Create Account' : 'Sign In'}
             </button>
           </form>
-
-          {/* Temporary Demo Button */}
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <button
-              onClick={() => {
-                const demoUser = {
-                  id: 'demo-student',
-                  username: 'demo@student.com',
-                  name: 'Demo Student',
-                  email: 'demo@student.com',
-                  role: 'student' as const,
-                };
-                login(demoUser);
-                navigate('/dashboard');
-              }}
-              className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors text-sm"
-            >
-              🚀 Skip to Dashboard (Demo Student)
-            </button>
-            <button
-              onClick={() => {
-                const demoUser = {
-                  id: 'demo-senior',
-                  username: 'demo@senior.com',
-                  name: 'Demo Senior Dev',
-                  email: 'demo@senior.com',
-                  role: 'senior' as const,
-                };
-                login(demoUser);
-                navigate('/dashboard');
-              }}
-              className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors text-sm mt-2"
-            >
-              👨‍💻 Skip to Dashboard (Demo Senior)
-            </button>
-          </div>
         </div>
       </div>
     </div>
