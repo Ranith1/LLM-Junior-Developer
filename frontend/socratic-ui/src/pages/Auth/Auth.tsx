@@ -1,24 +1,57 @@
 import { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function Auth() {
+  const { login } = useAuth();
+  const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [accountType, setAccountType] = useState<'student' | 'senior'>('student');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // TODO: Implement actual authentication logic
+    // TODO: Replace with real API calls
     console.log(isSignUp ? 'Sign Up' : 'Sign In', { 
       email, 
       password, 
-      ...(isSignUp && { name }) 
+      ...(isSignUp && { name, accountType }) 
     });
     
-    // For now, just simulate success and redirect
-    // In real implementation, this would call your auth API
-    alert(`${isSignUp ? 'Sign Up' : 'Sign In'} functionality will be implemented later!`);
+    if (isSignUp) {
+      // Create user object for signup
+      const userData = {
+        id: Date.now().toString(), // Temporary ID - will come from backend
+        name,
+        email,
+        role: accountType,
+      };
+      
+      // TODO: Call signup API here
+      // const response = await signupAPI(name, email, password, accountType);
+      // login(response.user);
+      
+      login(userData);
+      navigate('/dashboard');
+    } else {
+      // Create user object for signin (mock data)
+      const userData = {
+        id: Date.now().toString(), // Temporary ID - will come from backend
+        name: 'Demo User', // Will come from backend
+        email,
+        role: 'student' as const, // Will come from backend
+      };
+      
+      // TODO: Call login API here
+      // const response = await loginAPI(email, password);
+      // login(response.user);
+      
+      login(userData);
+      navigate('/dashboard');
+    }
   };
 
   return (
@@ -82,6 +115,40 @@ export default function Auth() {
                 />
               </div>
             )}
+
+            {isSignUp && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Account Type
+                </label>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setAccountType('student')}
+                    className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all ${
+                      accountType === 'student'
+                        ? 'border-blue-600 bg-blue-50 text-blue-700'
+                        : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                    }`}
+                  >
+                    <div className="font-medium">Student</div>
+                    <div className="text-xs mt-1 opacity-75">Learning to code</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAccountType('senior')}
+                    className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all ${
+                      accountType === 'senior'
+                        ? 'border-blue-600 bg-blue-50 text-blue-700'
+                        : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                    }`}
+                  >
+                    <div className="font-medium">Senior Developer</div>
+                    <div className="text-xs mt-1 opacity-75">Experienced mentor</div>
+                  </button>
+                </div>
+              </div>
+            )}
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -123,13 +190,33 @@ export default function Auth() {
           <div className="mt-4 pt-4 border-t border-gray-200">
             <button
               onClick={() => {
-                // Set a simple flag for demo purposes
-                localStorage.setItem('isLoggedIn', 'true');
-                window.location.href = '/dashboard';
+                const demoUser = {
+                  id: 'demo-student',
+                  name: 'Demo Student',
+                  email: 'demo@student.com',
+                  role: 'student' as const,
+                };
+                login(demoUser);
+                navigate('/dashboard');
               }}
               className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors text-sm"
             >
-              🚀 Skip to Dashboard (Demo)
+              🚀 Skip to Dashboard (Demo Student)
+            </button>
+            <button
+              onClick={() => {
+                const demoUser = {
+                  id: 'demo-senior',
+                  name: 'Demo Senior Dev',
+                  email: 'demo@senior.com',
+                  role: 'senior' as const,
+                };
+                login(demoUser);
+                navigate('/dashboard');
+              }}
+              className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors text-sm mt-2"
+            >
+              👨‍💻 Skip to Dashboard (Demo Senior)
             </button>
           </div>
         </div>
