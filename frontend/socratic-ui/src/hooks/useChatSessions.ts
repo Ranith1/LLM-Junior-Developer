@@ -1,7 +1,9 @@
 import { useState, useCallback } from 'react';
 import type { Message, ChatSession } from '../types/chat';
+import { useAuth } from '../contexts/AuthContext';
 
 export function useChatSessions() {
+  const { user } = useAuth();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -33,11 +35,14 @@ export function useChatSessions() {
   }, [messages, currentSessionId, currentStep, generateTitle]);
 
   const createNewChat = useCallback(() => {
+    if (!user) return; // Guard against no user
+    
     // Save current session before creating new one
     saveCurrentSession();
     
     const newSession: ChatSession = {
       id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      user_id: user.id,
       title: 'New Chat',
       messages: [],
       createdAt: new Date().toISOString(),
@@ -50,7 +55,7 @@ export function useChatSessions() {
     setCurrentSessionId(newSession.id);
     setMessages([]);
     setCurrentStep(1);
-  }, [saveCurrentSession]);
+  }, [saveCurrentSession, user]);
 
   const selectSession = useCallback((sessionId: string) => {
     // Save current session before switching
@@ -65,6 +70,8 @@ export function useChatSessions() {
   }, [sessions, saveCurrentSession]);
 
   const addMessage = useCallback((message: Message) => {
+    if (!user) return; // Guard against no user
+    
     setMessages(prev => {
       const updated = [...prev, message];
       
@@ -72,6 +79,7 @@ export function useChatSessions() {
       if (!currentSessionId && message.type === 'user') {
         const firstSession: ChatSession = {
           id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          user_id: user.id,
           title: generateTitle(message.content),
           messages: updated,
           createdAt: new Date().toISOString(),
@@ -100,7 +108,7 @@ export function useChatSessions() {
       
       return updated;
     });
-  }, [currentSessionId, currentStep, generateTitle]);
+  }, [currentSessionId, currentStep, generateTitle, user]);
 
   return {
     sessions,

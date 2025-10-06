@@ -28,7 +28,7 @@ export default function Dashboard() {
       id: Date.now().toString(),
       type: 'user' as const,
       content: text.trim(),
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(),
     };
 
     addMessage(userMessage);
@@ -56,7 +56,7 @@ export default function Dashboard() {
         id: (Date.now() + 1).toString(),
         type: 'assistant' as const,
         content: `${data.assistant_message}\n\n${data.question}`,
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
         step: data.step_id,
         validation: data.validation,
         notes: data.notes,
@@ -136,7 +136,7 @@ export default function Dashboard() {
                   <div className={`text-xs mt-2 ${
                     message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
                   }`}>
-                    {message.timestamp.toLocaleTimeString()}
+                    {new Date(message.timestamp).toLocaleTimeString()}
                   </div>
                 </div>
               </div>

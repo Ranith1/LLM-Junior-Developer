@@ -15,16 +15,12 @@ export default function Auth() {
     e.preventDefault();
     
     // TODO: Replace with real API calls
-    console.log(isSignUp ? 'Sign Up' : 'Sign In', { 
-      email, 
-      password, 
-      ...(isSignUp && { name, accountType }) 
-    });
     
     if (isSignUp) {
       // Create user object for signup
       const userData = {
         id: Date.now().toString(), // Temporary ID - will come from backend
+        username: email, // Using email as username for MongoDB
         name,
         email,
         role: accountType,
@@ -40,6 +36,7 @@ export default function Auth() {
       // Create user object for signin (mock data)
       const userData = {
         id: Date.now().toString(), // Temporary ID - will come from backend
+        username: email, // Using email as username for MongoDB
         name: 'Demo User', // Will come from backend
         email,
         role: 'student' as const, // Will come from backend
@@ -192,6 +189,7 @@ export default function Auth() {
               onClick={() => {
                 const demoUser = {
                   id: 'demo-student',
+                  username: 'demo@student.com',
                   name: 'Demo Student',
                   email: 'demo@student.com',
                   role: 'student' as const,
@@ -207,6 +205,7 @@ export default function Auth() {
               onClick={() => {
                 const demoUser = {
                   id: 'demo-senior',
+                  username: 'demo@senior.com',
                   name: 'Demo Senior Dev',
                   email: 'demo@senior.com',
                   role: 'senior' as const,

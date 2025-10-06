@@ -2,7 +2,7 @@ export interface Message {
   id: string;
   type: 'user' | 'assistant';
   content: string;
-  timestamp: Date;
+  timestamp: string;
   step?: number;
   validation?: boolean;
   notes?: string;
@@ -10,6 +10,7 @@ export interface Message {
 
 export interface ChatSession {
   id: string;
+  user_id: string;
   title: string;
   messages: Message[];
   createdAt: string;
