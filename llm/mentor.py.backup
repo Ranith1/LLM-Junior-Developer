@@ -19,9 +19,11 @@ INSTRUCTIONS = PROMPT_PATH.read_text(encoding="utf-8")
 
 
 def _extract_tool_args(resp) -> dict:
-    """Extract function/tool call arguments from responses api output
-    Handles function_call/tool_call events types"""
+
+# extract function/tool call arguments from responses api output
+# handes function_call/tool_call events types
     output = getattr(resp, "output", []) or []
+
 
     parts = [p for p in output if getattr(p, "type", "") in ("function_call", "tool_call")]
     if not parts:
@@ -51,30 +53,61 @@ def _extract_tool_args(resp) -> dict:
 
 
 def socratic_turn(user_text: str, step_hint: int | None = None, conversation_history: list = None):
-    """One Socratic turn. Returns dict: { step_id, assistant_message, question, validation?, notes? }"""
+#     One Socratic turn. Returns dict: { step_id, assistant_message, question, validation?, notes? }
     
-    # Use the instructions as-is - the new system prompt handles everything internally
     call_instructions = INSTRUCTIONS
     
-    # Only add step hint if provided (let the system prompt handle step progression naturally)
+    # Enhanced step directive
     if step_hint is not None:
-        call_instructions += f"\n\nCURRENT STEP: You are currently on step {step_hint}."
+        call_instructions += (
+            f"\n\nSYSTEM DIRECTIVE: set step_id to {step_hint} for THIS turn "
+            f"(unless the learner clearly regressed). "
+            f"NEVER go backwards in steps unless the learner shows confusion."
+        )
+    
+    # Category persistence - maintain classification throughout conversation
+    detected_category = None
+    if conversation_history:
+        # Look for category in previous assistant messages
+        for msg in reversed(conversation_history):
+            if msg.get("role") == "assistant":
+                content = msg.get("content", "")
+                if "category=debugging" in content:
+                    detected_category = "debugging"
+                    break
+                elif "category=code_generation" in content:
+                    detected_category = "code_generation"
+                    break
+                elif "category=code_explanation" in content:
+                    detected_category = "code_explanation"
+                    break
+    
+    # Add category enforcement
+    if detected_category:
+        call_instructions += f"\n\nCRITICAL: This conversation is classified as {detected_category.upper()}. DO NOT change this classification. Maintain consistency with the established category throughout all responses."
 
     # Build input messages with conversation history for context
     input_msgs = []
     
     # Add conversation history if provided (limit to last 10 messages to save tokens)
     if conversation_history:
+        # Keep only recent history to avoid token limits
         recent_history = conversation_history[-10:] if len(conversation_history) > 10 else conversation_history
         input_msgs.extend(recent_history)
     
     # Add the current user message
     input_msgs.append({"role": "user", "content": user_text})
+    
+    # Add system directive if step hint is provided
+    if step_hint is not None:
+        input_msgs.insert(0, {"role": "system", "content": f"NEXT STEP MUST BE {step_hint}. Do not repeat previous questions."})
 
+    
     tool_choice = {"type": "function", "name": "socratic_turn"}
 
     if os.getenv("SOC_DEBUG", "0") == "1":
         print(f"[DEBUG] Step hint: {step_hint}")
+        print(f"[DEBUG] Detected category: {detected_category}")
         print(f"[DEBUG] Input messages count: {len(input_msgs)}")
 
     try:
@@ -88,34 +121,40 @@ def socratic_turn(user_text: str, step_hint: int | None = None, conversation_his
     except Exception as e:
         if os.getenv("SOC_DEBUG", "0") == "1":
             print(f"[DEBUG] API Error: {e}")
-        # Simple fallback
+        # Better fallback that maintains context
         fallback_step = step_hint or 1
         return {
             "step_id": fallback_step,
             "assistant_message": "I need to understand your problem better.",
             "question": "Could you clarify what specific issue you're facing?",
-            "notes": "fallback_response"
+            "notes": f"fallback_response,category={detected_category}" if detected_category else "fallback_response"
         }
 
     payload = _extract_tool_args(resp)
     if not payload:
-        # Simple fallback
+        # Better fallback that maintains context
         fallback_step = step_hint or 1
         return {
             "step_id": fallback_step,
             "assistant_message": "I need to understand your problem better.",
             "question": "Could you clarify what specific issue you're facing?",
-            "notes": "fallback_response"
+            "notes": f"fallback_response,category={detected_category}" if detected_category else "fallback_response"
         }
 
-    # Clean up the response
+    
     msg = (payload.get("assistant_message") or "Great start — let's scope it together.").strip()
     q = (payload.get("question") or "What inputs and outputs are needed?").strip()
     if not q.endswith("?"):
         q = q.rstrip(".") + "?"
+    
+    # Ensure category is preserved in notes
+    notes = payload.get("notes", "")
+    if detected_category and f"category={detected_category}" not in notes:
+        notes = f"{notes},category={detected_category}" if notes else f"category={detected_category}"
 
     payload["assistant_message"] = msg
     payload["question"] = q
+    payload["notes"] = notes
     return payload
 
 
