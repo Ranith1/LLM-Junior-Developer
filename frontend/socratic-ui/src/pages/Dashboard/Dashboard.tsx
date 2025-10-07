@@ -4,6 +4,7 @@ import Header from "../../components/Layout/Header";
 import ChatSidebar from "../../components/Sidebar/ChatSidebar";
 import { useChatSessions } from "../../hooks/useChatSessions";
 
+
 export default function Dashboard() {
   const {
     sessions,
@@ -24,26 +25,37 @@ export default function Dashboard() {
     e.preventDefault();
     if (!text.trim()) return;
 
-    const userMessage = {
-      id: Date.now().toString(),
-      type: 'user' as const,
-      content: text.trim(),
-      timestamp: new Date().toISOString(),
-    };
-
-    addMessage(userMessage);
+    const userContent = text.trim();
+    setText("");  // Clear input immediately
     setLoading(true);
     setErr(null);
-    setText("");
 
     try {
-      const conversationHistory: ConversationMessage[] = messages.map(msg => ({
-        role: msg.type === 'user' ? 'user' : 'assistant',
-        content: msg.content
-      }));
+      // 1. ADD USER MESSAGE (await it and capture conversationId!)
+      const result = await addMessage({
+        type: 'user',
+        content: userContent,
+      });
+      
+      if (!result) return; // Guard clause if addMessage fails
+      const { conversationId } = result;
 
+      // 2. BUILD CONVERSATION HISTORY
+      // Include the message we just added
+      const conversationHistory: ConversationMessage[] = [
+        ...messages.map(msg => ({
+          role: msg.type === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        })),
+        {
+          role: 'user',
+          content: userContent
+        }
+      ];
+
+      // 3. GET AI RESPONSE
       const data = await socraticTurn({
-        text: userMessage.content,
+        text: userContent,
         step: currentStep,
         conversation_history: conversationHistory,
       });
@@ -52,17 +64,15 @@ export default function Dashboard() {
         setCurrentStep(data.step_id);
       }
 
-      const assistantMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'assistant' as const,
+      // 4. ADD ASSISTANT MESSAGE (pass the conversationId explicitly!)
+      await addMessage({
+        type: 'assistant',
         content: `${data.assistant_message}\n\n${data.question}`,
-        timestamp: new Date().toISOString(),
         step: data.step_id,
         validation: data.validation,
         notes: data.notes,
-      };
+      }, conversationId);
 
-      addMessage(assistantMessage);
     } catch (error) {
       console.error('Error:', error);
       setErr(error instanceof Error ? error.message : 'Something went wrong');
