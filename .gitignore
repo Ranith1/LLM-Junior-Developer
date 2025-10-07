@@ -2,6 +2,7 @@
 llm/.env
 database/.env
 frontend/.env
+backend/.env
 .env
 .env.local
 .env.development.local

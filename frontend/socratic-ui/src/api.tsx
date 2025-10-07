@@ -31,6 +31,93 @@ export async function socraticTurn(req: SocraticReq): Promise<SocraticRes> {
 }
 
 // ==============================================
+// AUTHENTICATION APIs
+// ==============================================
+
+const AUTH_BASE = import.meta.env.VITE_AUTH_BASE_URL ?? "http://localhost:5001";
+
+export type User = {
+  id: string;
+  username: string;
+  name: string;
+  email: string;
+  role: 'student' | 'senior';
+};
+
+export type AuthResponse = {
+  success: boolean;
+  message: string;
+  user: User;
+  token: string;
+};
+
+export type AuthError = {
+  success: false;
+  message: string;
+  error?: string;
+};
+
+/**
+ * Sign up a new user
+ */
+export async function signup(
+  name: string,
+  email: string,
+  password: string,
+  role: 'student' | 'senior'
+): Promise<AuthResponse> {
+  const r = await fetch(`${AUTH_BASE}/api/auth/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, email, password, role }),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.message || `HTTP ${r.status}`);
+  return data;
+}
+
+/**
+ * Login user
+ */
+export async function login(email: string, password: string): Promise<AuthResponse> {
+  const r = await fetch(`${AUTH_BASE}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.message || `HTTP ${r.status}`);
+  return data;
+}
+
+/**
+ * Verify JWT token and get user data
+ */
+export async function verifyToken(token: string): Promise<{ success: boolean; user: User }> {
+  const r = await fetch(`${AUTH_BASE}/api/auth/verify`, {
+    method: "GET",
+    headers: { 
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.message || `HTTP ${r.status}`);
+  return data;
+}
+
+/**
+ * Logout user
+ */
+export async function logout(): Promise<void> {
+  const r = await fetch(`${AUTH_BASE}/api/auth/logout`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+}
+
+// ==============================================
 // TODO: API Functions to Implement During Backend Integration
 // ==============================================
 
