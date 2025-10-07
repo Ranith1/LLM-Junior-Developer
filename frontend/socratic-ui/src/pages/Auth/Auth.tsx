@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { signup as signupAPI, login as loginAPI } from '../../api';
 
 export default function Auth() {
   const { login } = useAuth();
@@ -10,44 +11,35 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [accountType, setAccountType] = useState<'student' | 'senior'>('student');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
     
-    // TODO: Replace with real API calls
-    
-    if (isSignUp) {
-      // Create user object for signup
-      const userData = {
-        id: Date.now().toString(), // Temporary ID - will come from backend
-        username: email, // Using email as username for MongoDB
-        name,
-        email,
-        role: accountType,
-      };
-      
-      // TODO: Call signup API here
-      // const response = await signupAPI(name, email, password, accountType);
-      // login(response.user);
-      
-      login(userData);
-      navigate('/dashboard');
-    } else {
-      // Create user object for signin (mock data)
-      const userData = {
-        id: Date.now().toString(), // Temporary ID - will come from backend
-        username: email, // Using email as username for MongoDB
-        name: 'Demo User', // Will come from backend
-        email,
-        role: 'student' as const, // Will come from backend
-      };
-      
-      // TODO: Call login API here
-      // const response = await loginAPI(email, password);
-      // login(response.user);
-      
-      login(userData);
-      navigate('/dashboard');
+    try {
+      if (isSignUp) {
+        // Call signup API
+        const response = await signupAPI(name, email, password, accountType);
+        
+        // Login user with response data
+        login(response.user, response.token);
+        navigate('/dashboard');
+      } else {
+        // Call login API
+        const response = await loginAPI(email, password);
+        
+        // Login user with response data
+        login(response.user, response.token);
+        navigate('/dashboard');
+      }
+    } catch (err: any) {
+      console.error('Authentication error:', err);
+      setError(err.message || 'An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -71,6 +63,12 @@ export default function Auth() {
 
         {/* Auth Form */}
         <div className="bg-white rounded-lg shadow-md p-8">
+           {/* Error Message */}
+           {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
           {/* Toggle Buttons */}
           <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
             <button
@@ -177,9 +175,10 @@ export default function Auth() {
             
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium"
+              disabled={loading}
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSignUp ? 'Create Account' : 'Sign In'}
+              {loading ? 'Please wait...' : (isSignUp ? 'Create Account' : 'Sign In')}
             </button>
           </form>
         </div>
