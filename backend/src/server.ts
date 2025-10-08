@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDatabase } from './config/database';
 import authRoutes from './routes/authRoutes';
+import conversationRoutes from './routes/conversationRoutes'; 
 
 // Load environment variables
 dotenv.config();
@@ -31,9 +32,12 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/conversations', conversationRoutes);
+
 
 // 404 Handler
 app.use((req, res) => {
+
   res.status(404).json({ 
     success: false, 
     message: 'Route not found' 

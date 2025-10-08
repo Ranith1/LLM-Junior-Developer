@@ -117,104 +117,153 @@ export async function logout(): Promise<void> {
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
 }
 
+
 // ==============================================
-// TODO: API Functions to Implement During Backend Integration
+// CONVERSATION & MESSAGE APIs
 // ==============================================
 
-/*
- * AUTHENTICATION APIs
- * Location: Used in contexts/AuthContext.tsx and pages/Auth/Auth.tsx
- * 
- * POST /api/auth/signup
- *   Body: { name, email, password, role }
- *   Response: { user: User, token: string }
- *   Purpose: Create new user account
- * 
- * POST /api/auth/login
- *   Body: { email, password }
- *   Response: { user: User, token: string }
- *   Purpose: Authenticate user and get JWT token
- * 
- * POST /api/auth/logout
- *   Headers: { Authorization: Bearer <token> }
- *   Purpose: Invalidate session/token
- * 
- * GET /api/auth/verify
- *   Headers: { Authorization: Bearer <token> }
- *   Response: { user: User }
- *   Purpose: Verify JWT token is valid and get user data
- */
+// Import types from types/chat.ts (single source of truth)
+import type { Message, ChatSession } from './types/chat';
 
-/*
- * CONVERSATION APIs
- * Location: Used in hooks/useChatSessions.ts
- * 
- * GET /api/conversations?user_id={id}
- *   Query: user_id
- *   Response: { conversations: ChatSession[] }
- *   Purpose: Get all conversations for a specific user
- * 
- * POST /api/conversations
- *   Body: { user_id, title }
- *   Response: { conversation: ChatSession }
- *   Purpose: Create new conversation
- * 
- * GET /api/conversations/{id}
- *   Params: conversation_id
- *   Response: { conversation: ChatSession, messages: Message[] }
- *   Purpose: Get specific conversation with all messages
- * 
- * PUT /api/conversations/{id}
- *   Params: conversation_id
- *   Body: { title?, currentStep? }
- *   Response: { conversation: ChatSession }
- *   Purpose: Update conversation metadata (title, step, etc)
- * 
- * DELETE /api/conversations/{id}
- *   Params: conversation_id
- *   Response: { success: boolean }
- *   Purpose: Delete conversation and all its messages
+/**
+ * Helper: Get JWT token from localStorage
  */
+const getAuthToken = (): string | null => {
+  return localStorage.getItem('authToken');
+};
 
-/*
- * MESSAGE APIs
- * Location: Used in hooks/useChatSessions.ts
- * 
- * POST /api/conversations/{id}/messages
- *   Params: conversation_id
- *   Body: { type, content, step?, validation?, notes? }
- *   Response: { message: Message }
- *   Purpose: Add new message to conversation
- * 
- * GET /api/conversations/{id}/messages
- *   Params: conversation_id
- *   Response: { messages: Message[] }
- *   Purpose: Get all messages for a conversation
+/**
+ * Helper: Get headers with auth token
  */
+const getAuthHeaders = (): HeadersInit => {
+  const token = getAuthToken();
+  return {
+    "Content-Type": "application/json",
+    ...(token && { "Authorization": `Bearer ${token}` })
+  };
+};
 
-/*
- * NOTES FOR BACKEND INTEGRATION:
- * 
- * 1. JWT Token Storage:
- *    - Store token in localStorage: localStorage.setItem('authToken', token)
- *    - Include in all authenticated requests:
- *      headers: { 
- *        "Authorization": `Bearer ${token}`,
- *        "Content-Type": "application/json"
- *      }
- * 
- * 2. Error Handling:
- *    - 401 Unauthorized: Logout user and redirect to login
- *    - 403 Forbidden: Show permission error
- *    - 500 Server Error: Show generic error message
- * 
- * 3. MongoDB Schema Alignment:
- *    - User.username = User.email (using email as username)
- *    - ChatSession.user_id should reference User._id
- *    - All timestamps should be ISO strings
- * 
- * 4. Migration Strategy:
- *    - Replace mock data in AuthContext.login() with API call
- *    - Replace useChatSessions state management with API calls
- *    - Keep localStorage for offline support (optional)
+/**
+ * Get all conversations for the current user
+ * GET /api/conversations
  */
+export async function getConversations(): Promise<{ success: boolean; conversations: ChatSession[] }> {
+  const r = await fetch(`${AUTH_BASE}/api/conversations`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.message || `HTTP ${r.status}`);
+  
+  // Backend doesn't return messages in list view, so we add empty array
+  const conversationsWithMessages = data.conversations.map((conv: any) => ({
+    ...conv,
+    messages: [] // List view doesn't include messages
+  }));
+  
+  return { ...data, conversations: conversationsWithMessages };
+}
+
+/**
+ * Get a specific conversation with messages
+ * GET /api/conversations/:id
+ */
+export async function getConversation(conversationId: string): Promise<{
+  success: boolean;
+  conversation: ChatSession;
+  messages: Message[];
+}> {
+  const r = await fetch(`${AUTH_BASE}/api/conversations/${conversationId}`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.message || `HTTP ${r.status}`);
+  return data;
+}
+
+export async function createConversation(title?: string): Promise<{
+  success: boolean;
+  conversation: ChatSession;
+}> {
+  const r = await fetch(`${AUTH_BASE}/api/conversations`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ title: title || 'New Chat' }),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.message || `HTTP ${r.status}`);
+  
+  // Add empty messages array to match ChatSession type
+  return {
+    ...data,
+    conversation: {
+      ...data.conversation,
+      messages: []
+    }
+  };
+}
+
+/**
+ * Update a conversation
+ * PUT /api/conversations/:id
+ */
+export async function updateConversation(
+  conversationId: string,
+  updates: { title?: string; currentStep?: number; status?: string }
+): Promise<{
+  success: boolean;
+  conversation: ChatSession;
+}> {
+  const r = await fetch(`${AUTH_BASE}/api/conversations/${conversationId}`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(updates),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.message || `HTTP ${r.status}`);
+  return data;
+}
+
+/**
+ * Delete a conversation (soft delete)
+ * DELETE /api/conversations/:id
+ */
+export async function deleteConversation(conversationId: string): Promise<{ success: boolean; message: string }> {
+  const r = await fetch(`${AUTH_BASE}/api/conversations/${conversationId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.message || `HTTP ${r.status}`);
+  return data;
+}
+
+/**
+ * Add a message to a conversation
+ * POST /api/conversations/:id/messages
+ */
+export async function addMessage(
+  conversationId: string,
+  message: {
+    type: 'user' | 'assistant';
+    content: string;
+    step?: number;
+    validation?: boolean;
+    notes?: string;
+  }
+): Promise<{
+  success: boolean;
+  message: Message;
+}> {
+  const r = await fetch(`${AUTH_BASE}/api/conversations/${conversationId}/messages`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(message),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.message || `HTTP ${r.status}`);
+  return data;
+}
+
+
