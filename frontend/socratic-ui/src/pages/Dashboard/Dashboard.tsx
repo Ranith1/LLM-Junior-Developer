@@ -15,6 +15,7 @@ export default function Dashboard() {
     createNewChat,
     selectSession,
     addMessage,
+    deleteSession,
   } = useChatSessions();
 
   const [text, setText] = useState("");
@@ -92,6 +93,7 @@ export default function Dashboard() {
           currentSessionId={currentSessionId}
           onSelectSession={selectSession}
           onNewChat={createNewChat}
+          onDeleteSession={deleteSession}
         />
 
         {/* Main Chat Area */}

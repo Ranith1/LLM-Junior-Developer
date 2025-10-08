@@ -58,15 +58,15 @@ export function useChatSessions() {
   // ============================================
   const createNewChat = useCallback(async () => {
     if (!user) return;
-    
+
     try {
       setLoading(true);
       setError(null);
-      
+
       // Call backend API to create conversation
       const response = await api.createConversation('New Chat');
       const newSession = response.conversation;
-      
+
       // Update local state
       setSessions(prev => [newSession, ...prev]);
       setCurrentSessionId(newSession.id);
@@ -87,10 +87,10 @@ export function useChatSessions() {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Load conversation with messages from backend
       const response = await api.getConversation(sessionId);
-      
+
       // Update state
       setCurrentSessionId(sessionId);
       setMessages(response.messages || []);
@@ -103,6 +103,38 @@ export function useChatSessions() {
     }
   }, []);
 
+
+  // Add this after the selectSession function (around line 104)
+
+  // ============================================
+  // DELETE CONVERSATION
+  // ============================================
+  const deleteSession = useCallback(async (sessionId: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Call backend API to delete conversation
+      await api.deleteConversation(sessionId);
+
+      // Remove from local state
+      setSessions(prev => prev.filter(s => s.id !== sessionId));
+
+      // If we deleted the current session, clear it
+      if (currentSessionId === sessionId) {
+        setCurrentSessionId(null);
+        setMessages([]);
+        setCurrentStep(1);
+      }
+    } catch (err: any) {
+      console.error('Error deleting conversation:', err);
+      setError(err.message || 'Failed to delete conversation');
+    } finally {
+      setLoading(false);
+    }
+  }, [currentSessionId]);
+
+
   // ============================================
   // ADD MESSAGE (this is the key function!)
   // ============================================
@@ -111,7 +143,7 @@ export function useChatSessions() {
     explicitConversationId?: string
   ) => {
     if (!user) return;
-    
+
     try {
       // 1. CREATE CONVERSATION if needed (first message)
       let conversationId = explicitConversationId || currentSessionId;
@@ -119,7 +151,7 @@ export function useChatSessions() {
         const title = generateTitle(message.content);
         const response = await api.createConversation(title);
         conversationId = response.conversation.id;
-        
+
         // Add to sessions list
         setSessions(prev => [response.conversation, ...prev]);
         setCurrentSessionId(conversationId);
@@ -143,17 +175,17 @@ export function useChatSessions() {
       setMessages(prev => [...prev, newMessage]);
 
       // 4. UPDATE SESSION in list
-      setSessions(prev => prev.map(s => 
+      setSessions(prev => prev.map(s =>
         s.id === conversationId
           ? {
-              ...s,
-              messageCount: s.messageCount + 1,
-              updatedAt: newMessage.timestamp,
-              currentStep: message.step || s.currentStep,
-              title: s.title === 'New Chat' && message.type === 'user'
-                ? generateTitle(message.content)
-                : s.title
-            }
+            ...s,
+            messageCount: s.messageCount + 1,
+            updatedAt: newMessage.timestamp,
+            currentStep: message.step || s.currentStep,
+            title: s.title === 'New Chat' && message.type === 'user'
+              ? generateTitle(message.content)
+              : s.title
+          }
           : s
       ));
 
@@ -164,12 +196,12 @@ export function useChatSessions() {
           const session = prevSessions.find(s => s.id === conversationId);
           if (session && session.title === 'New Chat') {
             const newTitle = generateTitle(message.content);
-            
+
             // Update title in backend (fire and forget to avoid blocking)
             api.updateConversation(conversationId!, { title: newTitle }).catch(err => {
               console.error('Error updating conversation title:', err);
             });
-            
+
             // Update local sessions
             return prevSessions.map(s =>
               s.id === conversationId ? { ...s, title: newTitle } : s
@@ -199,6 +231,7 @@ export function useChatSessions() {
     createNewChat,
     selectSession,
     addMessage,
+    deleteSession,
     loading,
     error,
     refreshConversations: loadConversations,
