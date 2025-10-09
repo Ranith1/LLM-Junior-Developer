@@ -267,3 +267,126 @@ export async function addMessage(
 }
 
 
+// ==============================================
+// HELP REQUEST APIs
+// ==============================================
+
+export type HelpRequest = {
+  id: string;
+  student_id: string;
+  student_name: string;
+  student_email: string;
+  conversation_id: string;
+  problem_description: string;
+  conversation_summary: string;
+  assigned_senior_id: string;
+  status: 'pending' | 'contacted' | 'resolved' | 'cancelled';
+  created_at: string;
+  contacted_at?: string;
+  resolved_at?: string;
+};
+
+/**
+ * Create a new help request (Student Step 6)
+ * POST /api/help-requests
+ */
+export async function createHelpRequest(
+  conversationId: string,
+  problemDescription: string
+): Promise<{
+  success: boolean;
+  message: string;
+  helpRequest: {
+    id: string;
+    assignedSenior: {
+      name: string;
+      email: string;
+    };
+  };
+}> {
+  const r = await fetch(`${AUTH_BASE}/api/help-requests`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ conversationId, problemDescription }),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.message || `HTTP ${r.status}`);
+  return data;
+}
+
+/**
+ * Get help requests assigned to the logged-in senior
+ * GET /api/help-requests/assigned-to-me
+ */
+export async function getMyAssignedRequests(): Promise<{
+  success: boolean;
+  helpRequests: HelpRequest[];
+}> {
+  const r = await fetch(`${AUTH_BASE}/api/help-requests/assigned-to-me`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.message || `HTTP ${r.status}`);
+  return data;
+}
+
+/**
+ * Update help request status (Senior)
+ * PUT /api/help-requests/:id/status
+ */
+export async function updateHelpRequestStatus(
+  requestId: string,
+  status: 'pending' | 'contacted' | 'resolved' | 'cancelled'
+): Promise<{
+  success: boolean;
+  message: string;
+  helpRequest: HelpRequest;
+}> {
+  const r = await fetch(`${AUTH_BASE}/api/help-requests/${requestId}/status`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ status }),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error || data.message || `HTTP ${r.status}`);
+  return data;
+}
+
+/**
+ * Get student's own help requests
+ * GET /api/help-requests/my-requests
+ */
+export async function getMyRequests(): Promise<{
+  success: boolean;
+  helpRequests: HelpRequest[];
+}> {
+  const r = await fetch(`${AUTH_BASE}/api/help-requests/my-requests`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.message || `HTTP ${r.status}`);
+  return data;
+}
+
+
+/**
+ * Check if a conversation has an active help request
+ * GET /api/help-requests/conversation/:conversationId
+ */
+export async function getHelpRequestByConversation(
+  conversationId: string
+): Promise<{
+  success: boolean;
+  hasHelpRequest: boolean;
+  helpRequest: HelpRequest | null;
+}> {
+  const r = await fetch(`${AUTH_BASE}/api/help-requests/conversation/${conversationId}`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error || data.message || `HTTP ${r.status}`);
+  return data;
+}
