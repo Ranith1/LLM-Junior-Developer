@@ -133,6 +133,17 @@ def main():
         ({"meta.user_id": ASCENDING, "t": DESCENDING}, {"name": "idx_user_time"}),
     ])
 
+    # HELP_REQUESTS
+    ensure_collection("help_requests")
+    ensure_indexes("help_requests", [
+        ({"assigned_senior_id": ASCENDING, "status": ASCENDING, "created_at": DESCENDING}, 
+         {"name": "idx_senior_status_created"}),
+        ({"student_id": ASCENDING, "created_at": DESCENDING}, 
+         {"name": "idx_student_created"}),
+        ({"status": ASCENDING, "created_at": DESCENDING}, 
+         {"name": "idx_status_created"}),
+    ])
+
     print(f"Schema setup complete for DB: {DB_NAME}")
 
 if __name__ == "__main__":

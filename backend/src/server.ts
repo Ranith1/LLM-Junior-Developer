@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { connectDatabase } from './config/database';
 import authRoutes from './routes/authRoutes';
 import conversationRoutes from './routes/conversationRoutes'; 
+import helpRequestRoutes from './routes/helpRequestRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 
 
@@ -35,8 +36,6 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/conversations', conversationRoutes);
-app.use('/api/analytics', analyticsRoutes);
-
 
 
 // 404 Handler
