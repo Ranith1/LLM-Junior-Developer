@@ -266,4 +266,29 @@ export async function addMessage(
   return data;
 }
 
+// Add types
+export type UserAnalytics = {
+  success: boolean;
+  windowDays: number;
+  durations: { conversationId: string; fullDurationMs: number; timeToValidationMs: number|null; startedAt: string; lastActivityAt: string; }[];
+  stats: {
+    fullDuration: { count: number; avgMs: number|null; p50Ms: number|null; p90Ms: number|null; };
+    timeToValidation: { count: number; avgMs: number|null; p50Ms: number|null; p90Ms: number|null; };
+  };
+  topWords: { word: string; count: number }[];
+};
+
+export async function fetchUserAnalytics(userId: string, days = 90): Promise<UserAnalytics> {
+  const token = localStorage.getItem('authToken');
+  const r = await fetch(`${API_BASE}/api/analytics/user/${encodeURIComponent(userId)}/basic?days=${days}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    }
+  });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+
 
