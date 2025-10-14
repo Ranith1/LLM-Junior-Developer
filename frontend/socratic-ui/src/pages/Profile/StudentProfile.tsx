@@ -1,3 +1,4 @@
+// src/pages/Profile/StudentProfile.tsx
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -26,12 +27,22 @@ export default function StudentProfile() {
               </span>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="px-6 py-2 text-sm font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
-          >
-            Logout
-          </button>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/profile/analytics')}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              View My Analytics
+            </button>
+
+            <button
+              onClick={handleLogout}
+              className="px-6 py-2 text-sm font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+            >
+              Logout
+            </button>
+          </div>
         </div>
       </div>
     </div>

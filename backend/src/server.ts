@@ -3,8 +3,9 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDatabase } from './config/database';
 import authRoutes from './routes/authRoutes';
-import conversationRoutes from './routes/conversationRoutes'; 
+import conversationRoutes from './routes/conversationRoutes';
 import helpRequestRoutes from './routes/helpRequestRoutes';
+import analyticsRoutes from './routes/analyticsRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -14,7 +15,7 @@ const app: Express = express();
 const PORT = process.env.PORT || 5001;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
-// Middleware
+// Middleware (left as-is per your request)
 app.use(cors({
   origin: FRONTEND_URL,
   credentials: true
@@ -24,8 +25,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // Health check route
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     message: 'Server is running',
     timestamp: new Date().toISOString()
   });
@@ -35,14 +36,13 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/conversations', conversationRoutes);
 app.use('/api/help-requests', helpRequestRoutes);
-
+app.use('/api/analytics', analyticsRoutes);
 
 // 404 Handler
 app.use((req, res) => {
-
-  res.status(404).json({ 
-    success: false, 
-    message: 'Route not found' 
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
   });
 });
 
@@ -51,7 +51,7 @@ const startServer = async () => {
   try {
     // Connect to MongoDB
     await connectDatabase();
-    
+
     // Start listening
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);

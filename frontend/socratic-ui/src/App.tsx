@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Auth from './pages/Auth/Auth';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Profile from './pages/Profile/Profile';
+import SeniorAnalytics from './pages/Profile/SeniorAnalytics';
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
@@ -10,35 +11,45 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Auth Route - Default landing page */}
-      <Route 
-        path="/" 
+      <Route
+        path="/"
         element={
-          isAuthenticated ? 
-            <Navigate to="/dashboard" replace /> : 
+          isAuthenticated ?
+            <Navigate to="/dashboard" replace /> :
             <Auth />
-        } 
+        }
       />
-      
+
       {/* Dashboard - Protected route */}
-      <Route 
-        path="/dashboard" 
+      <Route
+        path="/dashboard"
         element={
-          isAuthenticated ? 
-            <Dashboard /> : 
+          isAuthenticated ?
+            <Dashboard /> :
             <Navigate to="/" replace />
-        } 
+        }
       />
-      
+
       {/* Profile - Protected route */}
-      <Route 
-        path="/profile" 
+      <Route
+        path="/profile"
         element={
-          isAuthenticated ? 
-            <Profile /> : 
+          isAuthenticated ?
+            <Profile /> :
             <Navigate to="/" replace />
-        } 
+        }
       />
-      
+
+      {/* Analytics page (senior can view any; student will view self via query userId=<their id>) */}
+      <Route
+        path="/profile/analytics"
+        element={
+          isAuthenticated ?
+            <SeniorAnalytics /> :
+            <Navigate to="/" replace />
+        }
+      />
+
       {/* Catch all other routes - redirect to home */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
