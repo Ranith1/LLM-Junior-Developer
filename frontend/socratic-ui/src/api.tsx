@@ -266,30 +266,74 @@ export async function addMessage(
   return data;
 }
 
-// Add types
+// --- Analytics types & API ---
 export type UserAnalytics = {
   success: boolean;
   windowDays: number;
-  durations: { conversationId: string; fullDurationMs: number; timeToValidationMs: number|null; startedAt: string; lastActivityAt: string; }[];
+  durations: {
+    conversationId: string;
+    fullDurationMs: number;
+    timeToValidationMs: number | null;
+    startedAt: string;
+    lastActivityAt: string;
+  }[];
   stats: {
-    fullDuration: { count: number; avgMs: number|null; p50Ms: number|null; p90Ms: number|null; };
-    timeToValidation: { count: number; avgMs: number|null; p50Ms: number|null; p90Ms: number|null; };
+    fullDuration: { count: number; avgMs: number | null; p50Ms: number | null; p90Ms: number | null };
+    timeToValidation: { count: number; avgMs: number | null; p50Ms: number | null; p90Ms: number | null };
   };
   topWords: { word: string; count: number }[];
 };
 
-export async function fetchUserAnalytics(userId: string, days = 90): Promise<UserAnalytics> {
-  const token = localStorage.getItem('authToken');
-  const r = await fetch(`${API_BASE}/api/analytics/user/${encodeURIComponent(userId)}/basic?days=${days}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-    }
+/**
+ * Fetch analytics for the logged-in student (their own data).
+ * GET /api/analytics/user/me
+ */
+export async function fetchMyAnalytics(days = 90): Promise<UserAnalytics> {
+  const r = await fetch(`${AUTH_BASE}/api/analytics/user/me?days=${days}`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
   });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   return r.json();
 }
 
+/**
+ * Fetch analytics for a specific user by ID (senior or self).
+ * GET /api/analytics/user/:id
+ */
+export async function fetchUserAnalyticsById(userId: string, days = 90): Promise<UserAnalytics> {
+  const r = await fetch(`${AUTH_BASE}/api/analytics/user/${encodeURIComponent(userId)}?days=${days}`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+/**
+ * Fetch analytics for a specific user by email (senior).
+ * GET /api/analytics/user/by-email/:email
+ */
+export async function fetchUserAnalyticsByEmail(email: string, days = 90): Promise<UserAnalytics> {
+  const r = await fetch(`${AUTH_BASE}/api/analytics/user/by-email/${encodeURIComponent(email)}?days=${days}`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+/**
+ * Backward-compatible convenience:
+ * - If userId is omitted => fetch "me"
+ * - If userId contains '@' => treat it as an email and use by-email route
+ * - Else => treat as a userId and use by-id route
+ */
+export async function fetchUserAnalytics(userId?: string, days = 90): Promise<UserAnalytics> {
+  if (!userId) return fetchMyAnalytics(days);
+  if (userId.includes('@')) return fetchUserAnalyticsByEmail(userId, days);
+  return fetchUserAnalyticsById(userId, days);
+}
 
 
 // ==============================================

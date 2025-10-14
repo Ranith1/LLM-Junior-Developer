@@ -64,6 +64,31 @@ export default function SeniorProfile() {
             Logout
           </button>
         </div>
+
+        {/* Small analytics form */}
+        <div className="mt-6 flex items-center gap-2">
+          <input
+            id="studentId"
+            placeholder="Enter Student User ID"
+            className="border rounded px-3 py-2 w-80"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                const id = (e.target as HTMLInputElement).value.trim();
+                if (id) navigate(`/profile/analytics?userId=${encodeURIComponent(id)}`);
+              }
+            }}
+          />
+          <button
+            onClick={() => {
+              const input = document.getElementById('studentId') as HTMLInputElement | null;
+              const id = input?.value.trim();
+              if (id) navigate(`/profile/analytics?userId=${encodeURIComponent(id)}`);
+            }}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            View Analytics
+          </button>
+        </div>
       </div>
 
       {/* Help Requests Section */}
@@ -160,7 +185,6 @@ export default function SeniorProfile() {
                       Mark as Resolved
                     </button>
                   )}
-                  
                 </div>
               </div>
             ))}
