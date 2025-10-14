@@ -12,89 +12,205 @@ The project aims to develop an AI tool that can provide guidance and suggestions
 
  
 
-Project Requirements  
+# Authentication & Backend Setup Guide
 
-Process requirements: 
+## Prerequisites
+- Node.js (v18 or higher)
+- MongoDB (local installation OR Docker)
+- Git
 
-● Requirements elicitation for AI tool personalized for junior developers
+---
 
-● Analyse and prioritise the requirements 
+## Setup Instructions for Team Members
 
-● Requirements specification (functional and non-functional requirements)
+### 1️⃣ **Clone the Repository**
+```bash
+git clone <your-repo-url>
+cd LLM-Junior-Developer
+```
 
- 
+### 2️⃣ **Install MongoDB Locally**
 
-Functional requirements: 
+**On macOS:**
+```bash
+# Install MongoDB using Homebrew
+brew tap mongodb/brew
+brew install mongodb-community
 
-● Tool design  
+# Start MongoDB service
+brew services start mongodb-community
 
-● AI suggestions accompanied by questions, checking developers understand
+# Verify installation
+mongosh --version
+```
 
-● The tool should contact an senior developer, using email registered in database, if notice junior developer stuck in a problem 
+**On Windows:**
+- Download MongoDB Community Server from: https://www.mongodb.com/try/download/community
+- Install and start MongoDB service
+- Verify with `mongosh --version`
 
-Non-Functional requirements: 
+**On Linux:**
+```bash
+# Follow instructions at: https://www.mongodb.com/docs/manual/administration/install-on-linux/
+```
 
-● Implementation of data protection measures for user privacy 
+### 3️⃣ **Set Up the Database**
 
-● Scalability of the tool 
+```bash
+cd database
 
-● Responsiveness across both mobile and web platforms 
+# Create Python virtual environment
+python3 -m venv .venv
 
-It is expected that we will do this in a number of agile sprints. Each sprint will involve 
+# Activate virtual environment
+# On macOS/Linux:
+source .venv/bin/activate
+# On Windows:
+.venv\Scripts\activate
 
-● Build/revise product backlog 
+# Install Python dependencies
+pip install pymongo python-dotenv
 
-● Prioritise backlog items 
+# Create .env file
+touch .env
+```
 
-● Identify top items that can be implemented to create/extend MVP 
+**Add this to `database/.env`:**
+```env
+MONGO_INITDB_ROOT_USERNAME=admin
+MONGO_INITDB_ROOT_PASSWORD=supersecret
+MONGODB_URI=mongodb://localhost:27017/junior_llm
+MONGO_DB=junior_llm
+```
 
-● Implement MVP 
+**Run database setup:**
+```bash
+python3 db_setup.py
+```
 
-● Deploy MVP for evaluation by industry practitioners/SE students 
+You should see: "Schema setup complete for DB: junior_llm"
 
-● Evaluate MVP and feed results into next iteration of product backlog 
+### 4️⃣ **Set Up the Backend**
 
- 
+```bash
+cd ../backend
 
- 
-
-Project Lead and Client Details 
-
-Samuel is a PhD candidate who is working in the area of junior software developers and Large Language Models and this is his PhD project. His email address is samuellucas.demouraferino@monash.edu.
-
- 
-
-Prof. Rashina Hoda is a Professor of Software Engineering in the Faculty of IT.  Her research focuses on the human and socio-technical aspects of Software Engineering, Artificial Intelligence, and Digital Health. She was named the 2025 Top Researcher in Software Systems in Australia by The Australian. 
-
- 
-
- 
-
-What will students learn in this project
-Requirements engineering
-Software project development and delivery
-Research skills
-Report writing
-Skills Required
-Required Skills and Knowledge 
-
-● Proactive and self-motivated  
-
-● Basic software engineering knowledge
-
-● Familiarity with web development frameworks, Cloud systems and SQL/NoSQL databases,e.g. React.Js, Node.JS, AWS Cloud, DynamoDB 
-
-● Web tool design, development and deployment 
-
-● Excellent communication skills, including the ability to produce clear and concise reports 
-
-
-running the tool:
-
-cd /Users/RehanAli/Desktop/UNI/FIT4701/LLM-Junior-Developer/llm
-python3 server.py
-
-
-cd /Users/RehanAli/Desktop/UNI/FIT4701/LLM-Junior-Developer/frontend/socratic-ui
+# Install Node.js dependencies
 npm install
+
+# Create .env file
+touch .env
+```
+
+**Add this to `backend/.env`:**
+```env
+# MongoDB Configuration
+MONGODB_URI=mongodb://localhost:27017/junior_llm
+DB_NAME=junior_llm
+
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+JWT_EXPIRES_IN=7d
+
+# Server Configuration
+PORT=5001
+NODE_ENV=development
+
+# CORS Configuration
+FRONTEND_URL=http://localhost:5173
+```
+
+**Create `nodemon.json` file:**
+```json
+{
+  "watch": ["src"],
+  "ext": "ts",
+  "ignore": ["src/**/*.spec.ts"],
+  "exec": "ts-node src/server.ts"
+}
+```
+
+**Start the backend server:**
+```bash
 npm run dev
+```
+
+You should see:
+- ✅ MongoDB connected successfully
+- 🚀 Server running on http://localhost:5001
+
+### 5️⃣ **Set Up the Frontend**
+
+```bash
+cd ../frontend/socratic-ui
+
+# Install Node.js dependencies
+npm install
+
+# Start the development server
+npm run dev
+```
+
+You should see: "Local: http://localhost:5173"
+
+---
+
+## ✅ **Verify Everything Works**
+
+1. Open browser to `http://localhost:5173`
+2. Click "Sign Up" and create a test account
+3. Fill in:
+   - Name: Test User
+   - Email: test@example.com
+   - Password: password123
+   - Role: Student
+4. Click "Create Account"
+5. You should be redirected to the dashboard
+
+---
+
+## 🚀 **Running the Application (After Initial Setup)**
+
+Each time you want to run the application:
+
+**Terminal 1 - Backend:**
+```bash
+cd backend
+npm run dev
+```
+
+**Terminal 2 - Frontend:**
+```bash
+cd frontend/socratic-ui
+npm run dev
+```
+
+**MongoDB should already be running:**
+```bash
+# Check if MongoDB is running
+brew services list | grep mongodb
+# If not running:
+brew services start mongodb-community
+```
+
+---
+
+## 🐛 **Common Issues**
+
+### "MongoDB connection failed"
+- Make sure MongoDB is running: `brew services start mongodb-community`
+- Check the connection string in `backend/.env`
+
+### "Port 5001 already in use"
+- Kill the process using port 5001: `lsof -ti:5001 | xargs kill -9`
+
+### "Module not found" errors
+- Run `npm install` in the affected directory
+
+### TypeScript compilation errors
+- Make sure you have the latest changes
+- Delete `node_modules` and run `npm install` again
+
+---
+
+## 📁 **Project Structure**
