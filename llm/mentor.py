@@ -84,6 +84,7 @@ def socratic_turn(user_text: str, step_hint: int | None = None, conversation_his
             input=input_msgs,
             tools=[SOCRATIC_TOOL],
             tool_choice=tool_choice,
+            temperature=0.3,  # Lower temperature for more consistent, predictable responses
         )
     except Exception as e:
         if os.getenv("SOC_DEBUG", "0") == "1":
