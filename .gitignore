@@ -46,6 +46,7 @@ __pycache__/
 *.pyo
 *.pyd
 *.so
+*.cpython-*.pyc
 .Python
 env/
 venv/
