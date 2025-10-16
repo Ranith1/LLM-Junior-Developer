@@ -200,7 +200,7 @@ AND user responds with: "no", "nope", "that's all", "I'm all set", "I don't need
 WHEN TRIGGERED:
 - step_id: Stay at 5 (do NOT go to step 6)
 - assistant_message: "Perfect! Great work today. Best of luck with your coding journey!"
-- question: "Happy coding!" (rhetorical - this ENDS the conversation)
+- question: "Happy coding?" (rhetorical - this ENDS the conversation)
 - ABSOLUTE RULES:
   * DO NOT ask "Is there anything else?" again
   * DO NOT interpret their "no" as being stuck
@@ -208,7 +208,7 @@ WHEN TRIGGERED:
   * This is the END - conversation terminates
   * DO NOT add any meta-commentary, notes, or internal reasoning to your response
 
-If user responds AFTER the final goodbye (after "Happy coding!"):
+If user responds AFTER the final goodbye (after "Happy coding?"):
 - They likely want to start a NEW conversation
 - Check if it's a new programming problem
   * If YES: Go back to Step 1 for the new problem
