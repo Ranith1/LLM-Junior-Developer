@@ -57,13 +57,13 @@ export const getUserBasicAnalytics = async (req: AuthRequest, res: Response): Pr
     const userId = new mongoose.Types.ObjectId(id);
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
-    // Conversations window
+    // Conversations 
     const convos = await Conversation.find({
       user_id: userId,
       status: { $ne: 'deleted' },
       started_at: { $gte: since }
     })
-      .select('_id started_at last_activity_at')
+      .select('_id started_at last_activity_at name title') 
       .lean();
 
     const convoIds = convos.map(c => c._id);
@@ -78,17 +78,24 @@ export const getUserBasicAnalytics = async (req: AuthRequest, res: Response): Pr
     const firstValidationMap = new Map<string, Date>();
     firstValidations.forEach(d => firstValidationMap.set(String(d._id), d.firstValidationAt));
 
-    // Durations
+    // Durations including conversation name
     const durations = convos.map(c => {
-      const fullDurationMs = new Date(c.last_activity_at).getTime() - new Date(c.started_at).getTime();
+      const fullDurationMs =
+        new Date(c.last_activity_at as any).getTime() - new Date(c.started_at as any).getTime();
       const fv = firstValidationMap.get(String(c._id));
-      const timeToValidationMs = fv ? (new Date(fv).getTime() - new Date(c.started_at).getTime()) : null;
+      const timeToValidationMs = fv ? (new Date(fv).getTime() - new Date(c.started_at as any).getTime()) : null;
+
+      // prefer 'name', fallback to 'title', else null
+      const conversationName =
+        (c as any).name ?? (c as any).title ?? null;
+
       return {
         conversationId: String(c._id),
+        conversationName,                          // <-- new field returned to frontend
         fullDurationMs,
         timeToValidationMs,
-        startedAt: c.started_at,
-        lastActivityAt: c.last_activity_at
+        startedAt: (c as any).started_at,
+        lastActivityAt: (c as any).last_activity_at
       };
     });
 
@@ -130,7 +137,7 @@ export const getUserBasicAnalytics = async (req: AuthRequest, res: Response): Pr
 
     const freq = new Map<string, number>();
     for (const m of msgs) {
-      for (const tok of normTokenize(m.content)) {
+      for (const tok of normTokenize((m as any).content)) {
         freq.set(tok, (freq.get(tok) ?? 0) + 1);
       }
     }
@@ -142,7 +149,7 @@ export const getUserBasicAnalytics = async (req: AuthRequest, res: Response): Pr
     res.json({
       success: true,
       windowDays: days,
-      durations,    // per-conversation rows
+      durations,    // per-conversation rows (now with conversationName)
       stats: { fullDuration: fullStats, timeToValidation: ttvStats },
       topWords
     });

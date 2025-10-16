@@ -10,6 +10,9 @@ export default function SeniorProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // local state for analytics input
+  const [studentId, setStudentId] = useState('');
+
   useEffect(() => {
     loadHelpRequests();
   }, []);
@@ -40,6 +43,13 @@ export default function SeniorProfile() {
     navigate('/');
   };
 
+  const goToAnalytics = () => {
+    const id = studentId.trim();
+    if (id) {
+      navigate(`/profile/analytics?userId=${encodeURIComponent(id)}`);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
       {/* Profile Header */}
@@ -64,26 +74,29 @@ export default function SeniorProfile() {
             Logout
           </button>
         </div>
+      </div>
 
-        {/* Small analytics form */}
-        <div className="mt-6 flex items-center gap-2">
+      {/* Analytics Section */}
+      <div className="bg-white rounded-lg shadow-md p-8 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-bold text-gray-900">Student Analytics</h3>
+        </div>
+        <p className="text-gray-600 mb-4">
+          Enter the email of a Student to view their analytics dashboard.
+        </p>
+        <div className="flex items-center gap-2">
           <input
-            id="studentId"
-            placeholder="Enter Student User ID"
-            className="border rounded px-3 py-2 w-80"
+            value={studentId}
+            onChange={(e) => setStudentId(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                const id = (e.target as HTMLInputElement).value.trim();
-                if (id) navigate(`/profile/analytics?userId=${encodeURIComponent(id)}`);
-              }
+              if (e.key === 'Enter') goToAnalytics();
             }}
+            placeholder="Enter Student Email"
+            className="border rounded px-3 py-2 w-80"
+            aria-label="Student User ID"
           />
           <button
-            onClick={() => {
-              const input = document.getElementById('studentId') as HTMLInputElement | null;
-              const id = input?.value.trim();
-              if (id) navigate(`/profile/analytics?userId=${encodeURIComponent(id)}`);
-            }}
+            onClick={goToAnalytics}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             View Analytics
@@ -138,11 +151,15 @@ export default function SeniorProfile() {
                     <div>
                       <h4 className="font-semibold text-gray-900">{request.student_name}</h4>
                       <p className="text-sm text-gray-600">{request.student_email}</p>
-                      <span className={`inline-block mt-1 px-2 py-1 text-xs font-medium rounded-full ${
-                        request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        request.status === 'contacted' ? 'bg-blue-100 text-blue-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
+                      <span
+                        className={`inline-block mt-1 px-2 py-1 text-xs font-medium rounded-full ${
+                          request.status === 'pending'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : request.status === 'contacted'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-green-100 text-green-800'
+                        }`}
+                      >
                         {request.status.toUpperCase()}
                       </span>
                     </div>
