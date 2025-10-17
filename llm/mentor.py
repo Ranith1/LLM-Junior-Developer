@@ -59,6 +59,15 @@ def socratic_turn(user_text: str, step_hint: int | None = None, conversation_his
     # Only add step hint if provided (let the system prompt handle step progression naturally)
     if step_hint is not None:
         call_instructions += f"\n\nCURRENT STEP: You are currently on step {step_hint}."
+    
+    # Add critical reminder at end (LLMs have recency bias - pay most attention to end of prompt)
+    call_instructions += """
+
+CRITICAL REMINDER - Your response format:
+- assistant_message: Statements ONLY. NO questions. NO question marks.
+- question: Must end with ?
+- NO meta-commentary in either field.
+This is your ONLY valid output format."""
 
     # Build input messages with conversation history for context
     input_msgs = []
@@ -85,6 +94,7 @@ def socratic_turn(user_text: str, step_hint: int | None = None, conversation_his
             tools=[SOCRATIC_TOOL],
             tool_choice=tool_choice,
             temperature=0.3,  # Lower temperature for more consistent, predictable responses
+            top_p=0.9,  # Nucleus sampling: only consider top 90% probability tokens
         )
     except Exception as e:
         if os.getenv("SOC_DEBUG", "0") == "1":
