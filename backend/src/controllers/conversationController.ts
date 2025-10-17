@@ -359,3 +359,81 @@ export const deleteConversation = async (req: AuthRequest, res: Response): Promi
       });
     }
 };
+
+/**
+* Mark a conversation as resolved
+* PATCH /api/conversations/:id/resolve
+* 
+* This is called when:
+* - User completes Step 5 and receives final goodbye ("Happy coding?")
+* - Learning session is complete
+* 
+* This marks the conversation as resolved, preventing further messages
+* and indicating successful completion of the Socratic learning process
+*/
+export const markConversationResolved = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId;
+
+    // 1. VALIDATE ID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid conversation ID'
+      });
+      return;
+    }
+
+    // 2. UPDATE STATUS TO RESOLVED
+    const conversation = await Conversation.findOneAndUpdate(
+      { 
+        _id: id, 
+        user_id: userId  // SECURITY: Only owner can mark as resolved
+      },
+      { 
+        status: 'resolved',
+        last_activity_at: new Date()
+      },
+      { 
+        new: true,
+        runValidators: true
+      }
+    ).lean();
+
+    // 3. CHECK IF FOUND
+    if (!conversation) {
+      res.status(404).json({
+        success: false,
+        message: 'Conversation not found'
+      });
+      return;
+    }
+
+    // 4. FORMAT AND SEND RESPONSE
+    const formattedConversation = {
+      id: conversation._id.toString(),
+      user_id: conversation.user_id.toString(),
+      title: conversation.title,
+      createdAt: conversation.started_at.toISOString(),
+      updatedAt: conversation.last_activity_at.toISOString(),
+      currentStep: conversation.current_step,
+      messageCount: conversation.message_count,
+      status: conversation.status
+    };
+
+    res.json({
+      success: true,
+      conversation: formattedConversation,
+      message: 'Conversation marked as resolved'
+    });
+
+  } catch (error: any) {
+    console.error('Error marking conversation as resolved:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to mark conversation as resolved',
+      error: error.message
+    });
+  }
+};

@@ -5,7 +5,8 @@ import {
   getConversation,
   createConversation,
   updateConversation,
-  deleteConversation
+  deleteConversation,
+  markConversationResolved
 } from '../controllers/conversationController';
 import {
   createMessage
@@ -41,6 +42,10 @@ router.put('/:id', updateConversation);
 // DELETE /api/conversations/:id
 // Soft delete conversation
 router.delete('/:id', deleteConversation);
+
+// PATCH /api/conversations/:id/resolve
+// Mark conversation as resolved (learning complete)
+router.patch('/:id/resolve', markConversationResolved);
 
 // ============================================
 // MESSAGE ROUTES (nested under conversations)

@@ -56,6 +56,17 @@ export const createMessage = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
+    // 3a. PREVENT MESSAGES TO RESOLVED CONVERSATIONS
+    // Security: Block messages to resolved conversations at the backend level
+    // This prevents API abuse via direct requests (bypassing frontend UI)
+    if (conversation.status === 'resolved') {
+      res.status(403).json({
+        success: false,
+        message: 'Cannot add messages to a resolved conversation. Please start a new conversation.'
+      });
+      return;
+    }
+
     // 4. GET NEXT SEQUENCE NUMBER
     // Find the last message to determine next seq
     const lastMessage = await Message.findOne({ 

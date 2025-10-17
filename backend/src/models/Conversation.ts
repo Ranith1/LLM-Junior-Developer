@@ -5,7 +5,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IConversation extends Document {
   user_id: mongoose.Types.ObjectId;  // Reference to the User who owns this
   title: string;                      // "New Chat", "Help with React", etc.
-  status: 'active' | 'archived' | 'deleted';  // Conversation state
+  status: 'active' | 'archived' | 'deleted' | 'resolved';  // Conversation state
   started_at: Date;                   // When conversation was created
   last_activity_at: Date;             // When last message was sent
   current_step: number;               // Current step in Socratic method
@@ -29,7 +29,7 @@ const ConversationSchema = new Schema<IConversation>({
   },
   status: {
     type: String,
-    enum: ['active', 'archived', 'deleted'],  // Only allow these values
+    enum: ['active', 'archived', 'deleted', 'resolved'],  // Only allow these values
     default: 'active',
     index: true                        // Index for filtering by status
   },

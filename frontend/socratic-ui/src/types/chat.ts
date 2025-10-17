@@ -17,4 +17,5 @@ export interface ChatSession {
   updatedAt: string;
   messageCount: number;
   currentStep: number;
+  status?: 'active' | 'archived' | 'deleted' | 'resolved';
 }
