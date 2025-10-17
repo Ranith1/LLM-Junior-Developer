@@ -57,6 +57,12 @@ export default function SeniorAnalytics() {
   );
   const scale = (c: number) => 12 + Math.round((c / maxCount) * 24); // 12px..36px
 
+  
+  const convDisplayName = (d: any) =>
+    d.conversationName || d.conversationTitle || d.title || null;
+
+  const shortId = (id: string) => (id?.length ? `#${id.slice(0, 8)}` : '—');
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -168,7 +174,7 @@ export default function SeniorAnalytics() {
                 <table className="min-w-full text-sm">
                   <thead>
                     <tr className="text-left text-gray-600">
-                      <th className="py-2 pr-4">Conversation ID</th>
+                      <th className="py-2 pr-4">Conversation</th>
                       <th className="py-2 pr-4">Start</th>
                       <th className="py-2 pr-4">Last Activity</th>
                       <th className="py-2 pr-4">Duration</th>
@@ -176,15 +182,25 @@ export default function SeniorAnalytics() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.durations.map(d => (
-                      <tr key={d.conversationId} className="border-t">
-                        <td className="py-2 pr-4">{d.conversationId}</td>
-                        <td className="py-2 pr-4">{new Date(d.startedAt).toLocaleString()}</td>
-                        <td className="py-2 pr-4">{new Date(d.lastActivityAt).toLocaleString()}</td>
-                        <td className="py-2 pr-4">{msToFriendly(d.fullDurationMs)}</td>
-                        <td className="py-2 pr-4">{msToFriendly(d.timeToValidationMs ?? null)}</td>
-                      </tr>
-                    ))}
+                    {data.durations.map((d: any) => {
+                      const name = convDisplayName(d);
+                      return (
+                        <tr key={d.conversationId} className="border-t align-top">
+                          <td className="py-2 pr-4">
+                            <div className="font-medium text-gray-900">
+                              {name ?? shortId(d.conversationId)}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {name ? shortId(d.conversationId) : ' '}
+                            </div>
+                          </td>
+                          <td className="py-2 pr-4">{new Date(d.startedAt).toLocaleString()}</td>
+                          <td className="py-2 pr-4">{new Date(d.lastActivityAt).toLocaleString()}</td>
+                          <td className="py-2 pr-4">{msToFriendly(d.fullDurationMs)}</td>
+                          <td className="py-2 pr-4">{msToFriendly(d.timeToValidationMs ?? null)}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
