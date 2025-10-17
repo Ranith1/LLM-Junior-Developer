@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { socraticTurn, createHelpRequest, getHelpRequestByConversation, type ConversationMessage } from "../../api";
+import { socraticTurn, createHelpRequest, getHelpRequestByConversation, markConversationResolved, type ConversationMessage } from "../../api";
 import Header from "../../components/Layout/Header";
 import ChatSidebar from "../../components/Sidebar/ChatSidebar";
 import ContactSeniorModal from "../../components/ContactSeniorModal";
@@ -18,6 +18,7 @@ export default function Dashboard() {
     selectSession,
     addMessage,
     deleteSession,
+    refreshConversations,
   } = useChatSessions();
   const { user } = useAuth();
 
@@ -28,6 +29,7 @@ export default function Dashboard() {
   const [step6Detected, setStep6Detected] = useState(false);
   const [conversationHasHelpRequest, setConversationHasHelpRequest] = useState(false);
   const [helpRequestStatus, setHelpRequestStatus] = useState<'pending' | 'contacted' | 'resolved' | 'cancelled' | null>(null);
+  const [conversationResolved, setConversationResolved] = useState(false);
 
 
   // Check if current conversation has a help request (ONLY FOR STUDENTS)
@@ -53,6 +55,29 @@ export default function Dashboard() {
 
     checkHelpRequest();
   }, [currentSessionId, user]);
+
+  // Check if current conversation is resolved when switching conversations
+  useEffect(() => {
+    if (!currentSessionId) {
+      setConversationResolved(false);
+      return;
+    }
+
+    // Check if the current session has status 'resolved'
+    const currentSession = sessions.find(s => s.id === currentSessionId);
+    console.log('🔍 Checking conversation status:', {
+      currentSessionId,
+      sessionStatus: currentSession?.status,
+      willSetResolved: currentSession?.status === 'resolved'
+    });
+    
+    if (currentSession?.status === 'resolved') {
+      setConversationResolved(true);
+      console.log('🔒 Conversation is resolved - input will be disabled');
+    } else {
+      setConversationResolved(false);
+    }
+  }, [currentSessionId, sessions]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -99,6 +124,26 @@ export default function Dashboard() {
         // Check if we've reached Step 6
         if (data.step_id === 6) {
           setStep6Detected(true);
+        }
+
+        // Check if we've reached the final goodbye (Step 5 + "Happy coding?")
+        if (data.step_id === 5 && data.question?.includes("Happy coding?")) {
+          // Mark conversation as resolved
+          console.log('🎉 Final goodbye detected! Marking conversation as resolved...', {
+            step: data.step_id,
+            question: data.question,
+            conversationId
+          });
+          try {
+            await markConversationResolved(conversationId);
+            setConversationResolved(true);
+            // Refresh conversations to update the status in the sessions list
+            await refreshConversations();
+            console.log('✅ Conversation marked as resolved successfully');
+          } catch (error) {
+            console.error('❌ Error marking conversation as resolved:', error);
+            // Don't throw - still show the message even if marking fails
+          }
         }
       }
 
@@ -258,7 +303,30 @@ export default function Dashboard() {
           {/* Input Area - Fixed at bottom */}
           <div className="border-t border-gray-200 bg-white p-4 flex-shrink-0">
             <div className="max-w-4xl mx-auto">
-              {conversationHasHelpRequest ? (
+              {conversationResolved ? (
+                // Show resolved message when learning is complete
+                <div className="rounded-lg p-4 bg-green-50 border border-green-200">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-green-900 mb-1">Learning Complete!</h4>
+                      <p className="text-sm text-green-800 mb-3">
+                        Great work! You've successfully completed this learning session. This conversation is now archived for your reference.
+                      </p>
+                      <button
+                        onClick={createNewChat}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                      >
+                        Start New Learning Session
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : conversationHasHelpRequest ? (
                 // Show different messages based on status
                 <div className={`rounded-lg p-4 ${helpRequestStatus === 'resolved'
                   ? 'bg-green-50 border border-green-200'

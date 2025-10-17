@@ -240,6 +240,24 @@ export async function deleteConversation(conversationId: string): Promise<{ succ
 }
 
 /**
+ * Mark a conversation as resolved (learning complete)
+ * PATCH /api/conversations/:id/resolve
+ */
+export async function markConversationResolved(conversationId: string): Promise<{
+  success: boolean;
+  conversation: ChatSession;
+  message: string;
+}> {
+  const r = await fetch(`${AUTH_BASE}/api/conversations/${conversationId}/resolve`, {
+    method: "PATCH",
+    headers: getAuthHeaders(),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.message || `HTTP ${r.status}`);
+  return data;
+}
+
+/**
  * Add a message to a conversation
  * POST /api/conversations/:id/messages
  */
