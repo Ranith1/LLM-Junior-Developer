@@ -18,8 +18,6 @@ services:
     buildCommand: cd backend && npm ci --include=dev && npm run build
     startCommand: cd backend && npm start
     envVars:
-      - key: NODE_ENV
-        value: production
       - key: PORT
         value: 10000
       - key: FRONTEND_URL
