@@ -10,8 +10,7 @@ interface ContactSeniorModalProps {
 export default function ContactSeniorModal({
   isOpen,
   onClose,
-  onConfirm,
-  conversationId
+  onConfirm
 }: ContactSeniorModalProps) {
   const [problemDescription, setProblemDescription] = useState('');
   const [loading, setLoading] = useState(false);
