@@ -18,6 +18,7 @@ export type SocraticRes = {
   notes?: string;
 };
 
+// LLM API endpoint - use environment variable or localhost for development
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 export async function socraticTurn(req: SocraticReq): Promise<SocraticRes> {
@@ -34,6 +35,7 @@ export async function socraticTurn(req: SocraticReq): Promise<SocraticRes> {
 // AUTHENTICATION APIs
 // ==============================================
 
+// Backend API endpoint - use environment variable or localhost for development
 const AUTH_BASE = import.meta.env.VITE_AUTH_BASE_URL ?? "http://localhost:5001";
 
 export type User = {

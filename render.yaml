@@ -1,0 +1,43 @@
+services:
+  # Frontend - Static Site (React + Vite)
+  - type: web
+    name: llm-junior-developer-frontend
+    env: static
+    buildCommand: cd frontend/socratic-ui && npm install && npm run build
+    staticPublishPath: ./frontend/socratic-ui/dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false  # Set in Render dashboard to your LLM service URL
+      - key: VITE_AUTH_BASE_URL
+        sync: false  # Set in Render dashboard to your backend service URL
+
+  # Backend - Node.js/Express (Auth, Conversations, Analytics)
+  - type: web
+    name: llm-junior-developer-backend
+    env: node
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: FRONTEND_URL
+        sync: false  # Set in Render dashboard to your frontend URL
+      - key: MONGODB_URI
+        sync: false  # Set in Render dashboard - MongoDB connection string
+      - key: JWT_SECRET
+        sync: false  # Set in Render dashboard - Random secret string
+
+  # LLM Server - Python/FastAPI (Socratic Dialogue)
+  - type: web
+    name: llm-junior-developer-llm
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd llm && python server.py
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false  # Set in Render dashboard - Your OpenAI API key
+      - key: FRONTEND_URL
+        sync: false  # Set in Render dashboard to your frontend URL (for CORS)
+

@@ -3,14 +3,25 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Any, Dict, List
+import os
 from mentor import socratic_turn  # uses your existing function
 
 app = FastAPI()
 
+# Allow requests from production frontend and local development
+allowed_origins = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    os.environ.get("FRONTEND_URL", "")
+]
+# Filter out empty strings and add wildcard for production if FRONTEND_URL not set
+allowed_origins = [origin for origin in allowed_origins if origin]
+if not os.environ.get("FRONTEND_URL"):
+    allowed_origins.append("*")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=allowed_origins if allowed_origins else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -54,4 +65,7 @@ def do_turn(req: SocraticReq) -> Dict[str, Any]:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("server:app", host="127.0.0.1", port=8000, reload=True)
+    # Use PORT from environment (Render sets this) or default to 8000
+    port = int(os.environ.get("PORT", 8000))
+    # Bind to 0.0.0.0 so it's accessible from outside the container
+    uvicorn.run("server:app", host="0.0.0.0", port=port, reload=False)
