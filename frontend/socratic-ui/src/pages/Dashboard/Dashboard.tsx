@@ -19,6 +19,7 @@ export default function Dashboard() {
     addMessage,
     deleteSession,
     refreshConversations,
+    loading: sessionsLoading,
   } = useChatSessions();
   const { user } = useAuth();
 
@@ -189,6 +190,7 @@ export default function Dashboard() {
           onSelectSession={selectSession}
           onNewChat={createNewChat}
           onDeleteSession={deleteSession}
+          loading={sessionsLoading}
         />
 
         {/* Main Chat Area */}

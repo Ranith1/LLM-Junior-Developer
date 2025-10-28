@@ -6,7 +6,8 @@ interface ChatSidebarProps {
   currentSessionId: string | null;
   onSelectSession: (sessionId: string) => void;
   onNewChat: () => void;
-  onDeleteSession: (sessionId: string) => void;  // ← Add this prop
+  onDeleteSession: (sessionId: string) => void;
+  loading?: boolean;
 }
 
 export default function ChatSidebar({ 
@@ -14,7 +15,8 @@ export default function ChatSidebar({
   currentSessionId, 
   onSelectSession, 
   onNewChat,
-  onDeleteSession  // ← Add this prop
+  onDeleteSession,
+  loading = false
 }: ChatSidebarProps) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
@@ -71,7 +73,19 @@ export default function ChatSidebar({
         <div className="p-2">
           <h3 className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Chats</h3>
           
-          {sortedSessions.length === 0 ? (
+          {loading ? (
+            // Loading skeleton
+            <div className="space-y-1">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="px-3 py-3 rounded-lg">
+                  <div className="animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : sortedSessions.length === 0 ? (
             <div className="px-3 py-8 text-center text-gray-500 text-sm">
               No chats yet. Start a new conversation!
             </div>
