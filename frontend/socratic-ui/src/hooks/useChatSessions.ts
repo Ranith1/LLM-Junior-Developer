@@ -9,7 +9,8 @@ export function useChatSessions() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentStep, setCurrentStep] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [conversationsLoading, setConversationsLoading] = useState(false);
+  const [messagesLoading, setMessagesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // ============================================
@@ -26,7 +27,7 @@ export function useChatSessions() {
   // ============================================
   const loadConversations = useCallback(async () => {
     try {
-      setLoading(true);
+      setConversationsLoading(true);
       setError(null);
       const response = await api.getConversations();
       setSessions(response.conversations);
@@ -34,7 +35,7 @@ export function useChatSessions() {
       console.error('Error loading conversations:', err);
       setError(err.message || 'Failed to load conversations');
     } finally {
-      setLoading(false);
+      setConversationsLoading(false);
     }
   }, []); // No dependencies - only calls API
 
@@ -60,7 +61,6 @@ export function useChatSessions() {
     if (!user) return;
 
     try {
-      setLoading(true);
       setError(null);
 
       // Call backend API to create conversation
@@ -75,8 +75,6 @@ export function useChatSessions() {
     } catch (err: any) {
       console.error('Error creating conversation:', err);
       setError(err.message || 'Failed to create conversation');
-    } finally {
-      setLoading(false);
     }
   }, [user]);
 
@@ -85,7 +83,7 @@ export function useChatSessions() {
   // ============================================
   const selectSession = useCallback(async (sessionId: string) => {
     try {
-      setLoading(true);
+      setMessagesLoading(true);
       setError(null);
 
       // Load conversation with messages from backend
@@ -99,7 +97,7 @@ export function useChatSessions() {
       console.error('Error loading conversation:', err);
       setError(err.message || 'Failed to load conversation');
     } finally {
-      setLoading(false);
+      setMessagesLoading(false);
     }
   }, []);
 
@@ -111,7 +109,6 @@ export function useChatSessions() {
   // ============================================
   const deleteSession = useCallback(async (sessionId: string) => {
     try {
-      setLoading(true);
       setError(null);
 
       // Call backend API to delete conversation
@@ -129,8 +126,6 @@ export function useChatSessions() {
     } catch (err: any) {
       console.error('Error deleting conversation:', err);
       setError(err.message || 'Failed to delete conversation');
-    } finally {
-      setLoading(false);
     }
   }, [currentSessionId]);
 
@@ -232,7 +227,8 @@ export function useChatSessions() {
     selectSession,
     addMessage,
     deleteSession,
-    loading,
+    conversationsLoading,
+    messagesLoading,
     error,
     refreshConversations: loadConversations,
   };

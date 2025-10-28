@@ -19,7 +19,8 @@ export default function Dashboard() {
     addMessage,
     deleteSession,
     refreshConversations,
-    loading: sessionsLoading,
+    conversationsLoading,
+    messagesLoading,
   } = useChatSessions();
   const { user } = useAuth();
 
@@ -190,14 +191,20 @@ export default function Dashboard() {
           onSelectSession={selectSession}
           onNewChat={createNewChat}
           onDeleteSession={deleteSession}
-          loading={sessionsLoading}
+          loading={conversationsLoading}
         />
 
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 max-w-4xl mx-auto w-full">
-            {messages.length === 0 ? (
+            {messagesLoading ? (
+              // Loading state for messages
+              <div className="flex flex-col items-center justify-center h-full">
+                <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+                <p className="text-gray-600 text-sm">Loading conversation...</p>
+              </div>
+            ) : messages.length === 0 ? (
               <div className="text-center py-12">
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
